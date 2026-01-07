@@ -17,6 +17,7 @@ class OrganizadorArquivos:
         }
 
     def executar(self):
+        LogManager.configurar(self.origem)
         logging.info(f"=== Iniciando Organização (Simulação: {self.simulacao}) ===")
         logging.info(f"Origem: {self.origem}")
         logging.info(f"Destino: {self.destino}")
@@ -26,6 +27,7 @@ class OrganizadorArquivos:
         
         if total == 0:
             logging.info("Nenhum arquivo encontrado para organizar.")
+            print("Nenhum arquivo encontrado.")
             return
 
         print(f"\nEncontrados {total} arquivos. Iniciando processamento...")
@@ -70,31 +72,24 @@ class OrganizadorArquivos:
             counter += 1
 
     def _processar_arquivo(self, arquivo):
-        """
-        Lógica central de decisão para UM arquivo.
-        Atualiza automaticamente o self.stats.
-        """
         try:
-            data_arq = obter_data_criacao(arquivo)
+            data_arq = FileAnalyzer.obter_data_criacao(arquivo)
             pasta_final = self._gerar_caminho_destino(arquivo, data_arq)
             arquivo_destino = pasta_final / arquivo.name
 
-            # Lógica de Duplicidade e Colisão
             if arquivo_destino.exists():
-                hash_origem = calcular_md5(arquivo)
-                hash_destino = calcular_md5(arquivo_destino)
+                hash_origem = FileAnalyzer.calcular_md5(arquivo)
+                hash_destino = FileAnalyzer.calcular_md5(arquivo_destino)
 
                 if hash_origem == hash_destino:
                     logging.warning(f"DUPLICATA: {arquivo.name} já existe no destino. Ignorado.")
                     self.stats['duplicado'] += 1
-                    return # Para por aqui, não move
+                    return
                 else:
-                    # Conteúdo diferente, nome igual -> Renomear
                     arquivo_destino = self._resolver_conflito_nome(arquivo_destino)
                     logging.info(f"RENOMEADO: {arquivo.name} -> {arquivo_destino.name}")
                     self.stats['renomeado'] += 1
 
-            # Execução (Simulação ou Real)
             if self.simulacao:
                 logging.info(f"[SIMULAÇÃO] Moveria: {arquivo} -> {arquivo_destino}")
                 self.stats['sucesso'] += 1

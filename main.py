@@ -1,9 +1,10 @@
 from pathlib import Path
-from src.utils import configurar_logger
-from src.core import escanear_arquivos, processar_movimentacao
+from src.core import OrganizadorArquivos
 
 def main():
-    print("=== Organizador de Arquivos v2.0 (Modular + Recursivo) ===")
+    print("=== Organizador de Arquivos OO v3.0 ===")
+    print("Modo: Orientação a Objetos (POO)")
+    print("-" * 40)
     
     origem_str = input("Pasta de ORIGEM (vai escanear subpastas): ").strip().strip('"')
     destino_str = input("Pasta de DESTINO: ").strip().strip('"')
@@ -12,31 +13,20 @@ def main():
     destino = Path(destino_str)
 
     if not origem.exists():
-        print("Erro: Pasta de origem não existe.")
+        print(f"[ERRO] A pasta de origem não existe: {origem}")
         return
 
-    simulacao = input("Apenas simular? (S/N): ").strip().upper() == 'S'
+    simulacao_input = input("Apenas simular (Dry Run)? (S/N): ").strip().upper()
+    eh_simulacao = simulacao_input == 'S'
 
-    log_path = configurar_logger(origem)
+    organizador = OrganizadorArquivos(origem, destino, eh_simulacao)
     
-    print("\nEscaneando arquivos e subpastas...")
-    arquivos = escanear_arquivos(origem)
-    total = len(arquivos)
-    print(f"Encontrados {total} arquivos.")
-
-    stats = {'sucesso': 0, 'duplicado': 0, 'erro': 0}
-
-    for arquivo in arquivos:
-        resultado = processar_movimentacao(arquivo, destino, simulacao)
-        stats[resultado] += 1
-
-    print("\n" + "="*30)
-    print("Relatório Final")
-    print(f"Sucesso/Movidos: {stats['sucesso']}")
-    print(f"Duplicatas (Ignoradas): {stats['duplicado']}")
-    print(f"Erros: {stats['erro']}")
-    print(f"Log: {log_path}")
-    print("="*30)
+    try:
+        organizador.executar()
+    except KeyboardInterrupt:
+        print("\n\n[!] Operação interrompida pelo usuário.")
+    except Exception as e:
+        print(f"\n[!] Ocorreu um erro fatal no programa principal: {e}")
 
 if __name__ == "__main__":
     main()
