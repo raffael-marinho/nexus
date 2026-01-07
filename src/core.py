@@ -2,7 +2,7 @@ import shutil
 import logging
 from pathlib import Path
 from src.config import MAPA_EXTENSOES, MESES_PT
-from src.utils import calcular_md5, obter_data_criacao
+from src.utils import FileAnalyzer, LogManager
 
 class OrganizadorArquivos:
     def __init__(self, origem: Path, destino: Path, simulacao: bool = False):
