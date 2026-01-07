@@ -35,7 +35,11 @@ class OrganizadorArquivos:
         
         self._exibir_relatorio_final()
 
-    def gerar_caminho_destino(pasta_base, arquivo, data_obj):
+    def _escanear_arquivos(self):
+        return [f for f in self.origem.rglob('*') 
+                if f.is_file() and f.name != 'log_organizacao.txt']
+
+    def _gerar_caminho_destino(self, arquivo, data_obj):
         ext = arquivo.suffix.lower()
         
         if ext in MAPA_EXTENSOES:
@@ -47,9 +51,9 @@ class OrganizadorArquivos:
         ano = str(data_obj.year)
         mes = MESES_PT[data_obj.month]
         
-        return pasta_base / caminho_relativo / ano / mes
+        return self.destino / caminho_relativo / ano / mes
 
-    def resolver_duplicidade_nome(caminho_arquivo):
+    def _resolver_duplicidade_nome(self, caminho_arquivo):
         if not caminho_arquivo.exists():
             return caminho_arquivo
 
@@ -65,36 +69,86 @@ class OrganizadorArquivos:
                 return novo_caminho
             counter += 1
 
-    def escanear_arquivos(pasta_origem):
-        
-        return [f for f in pasta_origem.rglob('*') if f.is_file() and f.name != 'log_organizacao.txt']
-
-    def processar_movimentacao(arquivo, pasta_destino_raiz, simulacao=False):
+    def _processar_arquivo(self, arquivo):
+        """
+        Lógica central de decisão para UM arquivo.
+        Atualiza automaticamente o self.stats.
+        """
         try:
             data_arq = obter_data_criacao(arquivo)
-            pasta_final = gerar_caminho_destino(pasta_destino_raiz, arquivo, data_arq)
+            pasta_final = self._gerar_caminho_destino(arquivo, data_arq)
             arquivo_destino = pasta_final / arquivo.name
 
+            # Lógica de Duplicidade e Colisão
             if arquivo_destino.exists():
                 hash_origem = calcular_md5(arquivo)
                 hash_destino = calcular_md5(arquivo_destino)
 
                 if hash_origem == hash_destino:
                     logging.warning(f"DUPLICATA: {arquivo.name} já existe no destino. Ignorado.")
-                    return 'duplicado'
+                    self.stats['duplicado'] += 1
+                    return # Para por aqui, não move
                 else:
-                    arquivo_destino = resolver_duplicidade_nome(arquivo_destino)
+                    # Conteúdo diferente, nome igual -> Renomear
+                    arquivo_destino = self._resolver_conflito_nome(arquivo_destino)
                     logging.info(f"RENOMEADO: {arquivo.name} -> {arquivo_destino.name}")
+                    self.stats['renomeado'] += 1
 
-            if simulacao:
+            # Execução (Simulação ou Real)
+            if self.simulacao:
                 logging.info(f"[SIMULAÇÃO] Moveria: {arquivo} -> {arquivo_destino}")
-                return 'sucesso'
+                self.stats['sucesso'] += 1
             else:
                 pasta_final.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(arquivo), str(arquivo_destino))
                 logging.info(f"MOVIDO: {arquivo.name} -> {arquivo_destino}")
-                return 'sucesso'
+                self.stats['sucesso'] += 1
 
         except Exception as e:
             logging.error(f"FALHA em {arquivo}: {e}")
-            return 'erro'
+            self.stats['erro'] += 1
+
+    def _exibir_relatorio_final(self):
+        """Imprime o resumo da operação no console."""
+        print("\n" + "="*40)
+        print("📊 Relatório de Execução")
+        print("="*40)
+        print(f"✅ Sucesso (Movidos): {self.stats['sucesso']}")
+        print(f"⚠️  Renomeados:       {self.stats['renomeado']}")
+        print(f"♻️  Duplicatas:       {self.stats['duplicado']}")
+        print(f"❌ Erros:            {self.stats['erro']}")
+        print("="*40)
+
+    # def escanear_arquivos(pasta_origem):
+        
+    #     return [f for f in pasta_origem.rglob('*') if f.is_file() and f.name != 'log_organizacao.txt']
+
+    # def processar_movimentacao(arquivo, pasta_destino_raiz, simulacao=False):
+    #     try:
+    #         data_arq = obter_data_criacao(arquivo)
+    #         pasta_final = gerar_caminho_destino(pasta_destino_raiz, arquivo, data_arq)
+    #         arquivo_destino = pasta_final / arquivo.name
+
+    #         if arquivo_destino.exists():
+    #             hash_origem = calcular_md5(arquivo)
+    #             hash_destino = calcular_md5(arquivo_destino)
+
+    #             if hash_origem == hash_destino:
+    #                 logging.warning(f"DUPLICATA: {arquivo.name} já existe no destino. Ignorado.")
+    #                 return 'duplicado'
+    #             else:
+    #                 arquivo_destino = resolver_duplicidade_nome(arquivo_destino)
+    #                 logging.info(f"RENOMEADO: {arquivo.name} -> {arquivo_destino.name}")
+
+    #         if simulacao:
+    #             logging.info(f"[SIMULAÇÃO] Moveria: {arquivo} -> {arquivo_destino}")
+    #             return 'sucesso'
+    #         else:
+    #             pasta_final.mkdir(parents=True, exist_ok=True)
+    #             shutil.move(str(arquivo), str(arquivo_destino))
+    #             logging.info(f"MOVIDO: {arquivo.name} -> {arquivo_destino}")
+    #             return 'sucesso'
+
+    #     except Exception as e:
+    #         logging.error(f"FALHA em {arquivo}: {e}")
+    #         return 'erro'
