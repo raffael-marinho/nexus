@@ -2,7 +2,7 @@ import shutil
 import logging
 from pathlib import Path
 from src.config import MAPA_EXTENSOES, MESES_PT
-from src.utils import FileAnalyzer, LogManager
+from src.utils import FileAnalyzer, FileRenamer, LogManager
 
 class OrganizadorArquivos:
     def __init__(self, origem: Path, destino: Path, simulacao: bool = False):
@@ -38,8 +38,11 @@ class OrganizadorArquivos:
         self._exibir_relatorio_final()
 
     def _escanear_arquivos(self):
-        return [f for f in self.origem.rglob('*') 
-                if f.is_file() and f.name != 'log_organizacao.txt']
+        lista_arquivos = []
+        for item in self.origem.iterdir():
+            if item.is_file() and item.name != 'log_organizacao.txt' and not item.name.startswith('.'):
+                lista_arquivos.append(item)
+        return lista_arquivos
 
     def _gerar_caminho_destino(self, arquivo, data_obj):
         ext = arquivo.suffix.lower()
@@ -54,53 +57,43 @@ class OrganizadorArquivos:
         mes = MESES_PT[data_obj.month]
         
         return self.destino / caminho_relativo / ano / mes
-
-    def _resolver_conflito_nome(self, caminho_arquivo):
-        if not caminho_arquivo.exists():
-            return caminho_arquivo
-
-        parent = caminho_arquivo.parent
-        stem = caminho_arquivo.stem
-        suffix = caminho_arquivo.suffix
-        counter = 1
-
-        while True:
-            novo_nome = f"{stem}_copy_{counter}{suffix}"
-            novo_caminho = parent / novo_nome
-            if not novo_caminho.exists():
-                return novo_caminho
-            counter += 1
-
+    
     def _processar_arquivo(self, arquivo):
         try:
             data_arq = FileAnalyzer.obter_data_criacao(arquivo)
+            
             pasta_final = self._gerar_caminho_destino(arquivo, data_arq)
-            arquivo_destino = pasta_final / arquivo.name
+            caminho_destino_previsto = pasta_final / arquivo.name
 
-            if arquivo_destino.exists():
+            if caminho_destino_previsto.exists():
                 hash_origem = FileAnalyzer.calcular_md5(arquivo)
-                hash_destino = FileAnalyzer.calcular_md5(arquivo_destino)
+                hash_destino = FileAnalyzer.calcular_md5(caminho_destino_previsto)
 
                 if hash_origem == hash_destino:
                     logging.warning(f"DUPLICATA: {arquivo.name} já existe no destino. Ignorado.")
                     self.stats['duplicado'] += 1
-                    return
+                    return 
                 else:
-                    arquivo_destino = self._resolver_conflito_nome(arquivo_destino)
-                    logging.info(f"RENOMEADO: {arquivo.name} -> {arquivo_destino.name}")
+                    caminho_destino_final = FileRenamer.make_unique_name(caminho_destino_previsto)
+                    
+                    logging.info(f"RENOMEADO: {arquivo.name} será salvo como {caminho_destino_final.name}")
                     self.stats['renomeado'] += 1
+            else:
+                caminho_destino_final = caminho_destino_previsto
 
             if self.simulacao:
-                logging.info(f"[SIMULAÇÃO] Moveria: {arquivo} -> {arquivo_destino}")
+                logging.info(f"[SIMULAÇÃO] Moveria: {arquivo.name} -> {caminho_destino_final}")
                 self.stats['sucesso'] += 1
             else:
                 pasta_final.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(arquivo), str(arquivo_destino))
-                logging.info(f"MOVIDO: {arquivo.name} -> {arquivo_destino}")
+                
+                shutil.move(str(arquivo), str(caminho_destino_final))
+                
+                logging.info(f"MOVIDO: {arquivo.name} -> {caminho_destino_final}")
                 self.stats['sucesso'] += 1
 
         except Exception as e:
-            logging.error(f"FALHA em {arquivo}: {e}")
+            logging.error(f"FALHA em {arquivo.name}: {e}")
             self.stats['erro'] += 1
 
     def _exibir_relatorio_final(self):

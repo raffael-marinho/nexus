@@ -62,3 +62,23 @@ class FileAnalyzer:
             data_encontrada = datetime.fromtimestamp(timestamp)
 
         return data_encontrada
+    
+class FileRenamer:
+    @staticmethod
+    def make_unique_name(target_path: Path) -> Path:
+        if not target_path.exists():
+            return target_path
+
+        stem = target_path.stem  
+        suffix = target_path.suffix 
+        parent = target_path.parent 
+        
+        counter = 1
+        
+        while True:
+            new_name = f"{stem}_{counter}{suffix}"
+            new_path = parent / new_name
+            if not new_path.exists():
+                return new_path
+            
+            counter += 1
