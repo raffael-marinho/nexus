@@ -3,7 +3,6 @@ from src.core import OrganizadorArquivos
 
 def main():
     print("=== Organizador de Arquivos OO v3.0 ===")
-    print("Modo: Orientação a Objetos (POO)")
     print("-" * 40)
     
     origem_str = input("Pasta de ORIGEM (vai escanear subpastas): ").strip().strip('"')
