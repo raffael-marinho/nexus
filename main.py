@@ -18,7 +18,7 @@ def main():
     print("-" * 50)
     
     while True:
-        origem_input = input(">> Digite o caminho da pasta de ORIGEM(Monitorada)(Monitorada): ")
+        origem_input = input(">> Digite o caminho da pasta de ORIGEM(Monitorada): ")
         origem = limpar_caminho(origem_input)
 
         if origem and origem.exists() and origem.is_dir():
