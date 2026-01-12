@@ -1,25 +1,24 @@
 import sys
 from pathlib import Path
 from src.core import OrganizadorArquivos
+from src.monitor import MonitorPasta
 
 def limpar_caminho(caminho_str):
     if not caminho_str:
-        return None
-    
+        return None 
     limpo = caminho_str.strip().strip('"').strip("'")
-    
     path_obj = Path(limpo).expanduser().resolve()
     return path_obj
 
 def main():
     print("\n" + "="*50)
-    print("   ORGANIZADOR DE ARQUIVOS MULTIPLATAFORMA v3.0")
+    print("   ORGANIZADOR DE ARQUIVOS MULTIPLATAFORMA v4.0")
     print("="*50)
     print("Este programa organiza arquivos soltos na raiz da pasta escolhida.")
     print("-" * 50)
     
     while True:
-        origem_input = input(">> Digite o caminho da pasta de ORIGEM: ")
+        origem_input = input(">> Digite o caminho da pasta de ORIGEM(Monitorada)(Monitorada): ")
         origem = limpar_caminho(origem_input)
 
         if origem and origem.exists() and origem.is_dir():
@@ -49,19 +48,40 @@ def main():
         else:
             break
 
+    print("\n" + "-" * 50)
+    print("O que você deseja fazer?")
+    print("1. Organizar tudo AGORA (Execução Única)")
+    print("2. Ficar MONITORANDO em Tempo Real (Automático)")
     print("-" * 50)
-    simulacao_input = input(">> Apenas SIMULAR o que aconteceria? (S/N) [Padrão: S]: ").strip().upper()
-    eh_simulacao = simulacao_input != 'N' 
-
-    if eh_simulacao:
-        print("\n[MODO SIMULAÇÃO ATIVADO] Nenhum arquivo será movido de verdade.")
-    else:
-        print("\n[MODO REAL] Arquivos SERÃO movidos.")
+    
+    escolha = input(">> Escolha uma opção (1 ou 2): ").strip()
 
     try:
-        organizador = OrganizadorArquivos(origem, destino, eh_simulacao)
-        organizador.executar()
-        
+        if escolha == '1':
+            simulacao_input = input(">> Apenas SIMULAR? (S/N) [Padrão: S]: ").strip().upper()
+            eh_simulacao = simulacao_input != 'N'
+
+            if eh_simulacao:
+                print("\n[MODO SIMULAÇÃO] Nada será movido.")
+            else:
+                print("\n[MODO REAL] Arquivos SERÃO movidos.")
+
+            organizador = OrganizadorArquivos(origem, destino, eh_simulacao)
+            organizador.executar()
+
+        elif escolha == '2':
+            print("\n[!] INICIANDO VIGILÂNCIA...")
+            print(f"[!] Todos os novos arquivos em '{origem.name}' serão movidos para '{destino.name}'.")
+            print("[!] Pressione Ctrl+C para encerrar.")
+            
+            organizador = OrganizadorArquivos(origem, destino, simulacao=False)
+            
+            monitor = MonitorPasta(organizador)
+            monitor.iniciar() 
+
+        else:
+            print("\n[!] Opção inválida. Reinicie o programa.")
+
     except KeyboardInterrupt:
         print("\n\n[!] Operação interrompida pelo usuário (Ctrl+C).")
     except Exception as e:
