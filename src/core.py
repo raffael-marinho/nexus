@@ -33,7 +33,7 @@ class OrganizadorArquivos:
         print(f"\nEncontrados {total} arquivos. Iniciando processamento...")
 
         for arquivo in arquivos:
-            self._processar_arquivo(arquivo)
+            self.processar_unico_arquivo(arquivo)
         
         self._exibir_relatorio_final()
 
@@ -58,7 +58,7 @@ class OrganizadorArquivos:
         
         return self.destino / caminho_relativo / ano / mes
     
-    def _processar_arquivo(self, arquivo):
+    def processar_unico_arquivo(self, arquivo):
         try:
             data_arq = FileAnalyzer.obter_data_criacao(arquivo)
             
