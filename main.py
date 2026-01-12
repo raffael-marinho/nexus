@@ -2,6 +2,8 @@ import sys
 from pathlib import Path
 from src.core import OrganizadorArquivos
 from src.monitor import MonitorPasta
+from src.utils import LogManager
+sys.stdout.reconfigure(encoding='utf-8')
 
 def limpar_caminho(caminho_str):
     if not caminho_str:
@@ -74,6 +76,7 @@ def main():
             print(f"[!] Todos os novos arquivos em '{origem.name}' serão movidos para '{destino.name}'.")
             print("[!] Pressione Ctrl+C para encerrar.")
             
+            LogManager.configurar(origem)
             organizador = OrganizadorArquivos(origem, destino, simulacao=False)
             
             monitor = MonitorPasta(organizador)

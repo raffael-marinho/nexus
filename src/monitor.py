@@ -9,20 +9,30 @@ class OrganizadorHandler(FileSystemEventHandler):
     def __init__(self, organizador: OrganizadorArquivos):
         self.organizador = organizador
 
+    def _processar(self, caminho_arquivo):
+        """Método auxiliar para validar e chamar o organizador"""
+        caminho = Path(caminho_arquivo)
+        
+        print(f"[DEBUG] Evento detectado em: {caminho.name}")
+
+        if caminho.name.startswith('.') or caminho.name.endswith('.tmp') or 'crdownload' in caminho.name:
+            return
+
+        logging.info(f"[MONITOR] Processando: {caminho.name}")
+        
+        time.sleep(2) 
+        
+        self.organizador.processar_unico_arquivo(caminho)
+
     def on_created(self, event):
-        if event.is_directory:
-            return
+        if not event.is_directory:
+            print(f"[DEBUG] Criação detectada: {event.src_path}")
+            self._processar(event.src_path)
 
-        caminho_arquivo = Path(event.src_path)
-        
-        if caminho_arquivo.name.startswith('.') or caminho_arquivo.name.endswith('.tmp'):
-            return
-
-        logging.info(f"[MONITOR] Novo arquivo detectado: {caminho_arquivo.name}")
-        
-        time.sleep(1) 
-        
-        self.organizador.processar_unico_arquivo(caminho_arquivo)
+    def on_moved(self, event):
+        if not event.is_directory:
+            print(f"[DEBUG] Movimentação/Renomeação: {event.dest_path}")
+            self._processar(event.dest_path)
 
 class MonitorPasta:
     def __init__(self, organizador: OrganizadorArquivos):
@@ -33,10 +43,9 @@ class MonitorPasta:
     def iniciar(self):
         pasta_origem = str(self.organizador.origem)
         
-        logging.info(f"--> INICIANDO MONITORAMENTO EM TEMPO REAL: {pasta_origem}")
-        logging.info("--> Pressione Ctrl+C para parar.")
+        logging.info(f"--> INICIANDO MONITORAMENTO: {pasta_origem}")
         print(f"\n[Ouvindo] Monitorando a pasta: {pasta_origem}")
-        print("[Ouvindo] Cole arquivos lá para ver a mágica. (Ctrl+C para sair)")
+        print("[Ouvindo] Cole arquivos ou salve downloads lá. (Ctrl+C para sair)")
 
         self.observer.schedule(self.handler, pasta_origem, recursive=False)
         self.observer.start()

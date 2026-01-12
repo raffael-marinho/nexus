@@ -59,6 +59,8 @@ class OrganizadorArquivos:
         return self.destino / caminho_relativo / ano / mes
     
     def processar_unico_arquivo(self, arquivo):
+        if not arquivo.exists():
+            return
         try:
             data_arq = FileAnalyzer.obter_data_criacao(arquivo)
             
@@ -66,18 +68,10 @@ class OrganizadorArquivos:
             caminho_destino_previsto = pasta_final / arquivo.name
 
             if caminho_destino_previsto.exists():
-                hash_origem = FileAnalyzer.calcular_md5(arquivo)
-                hash_destino = FileAnalyzer.calcular_md5(caminho_destino_previsto)
-
-                if hash_origem == hash_destino:
-                    logging.warning(f"DUPLICATA: {arquivo.name} já existe no destino. Ignorado.")
-                    self.stats['duplicado'] += 1
-                    return 
-                else:
-                    caminho_destino_final = FileRenamer.make_unique_name(caminho_destino_previsto)
-                    
-                    logging.info(f"RENOMEADO: {arquivo.name} será salvo como {caminho_destino_final.name}")
-                    self.stats['renomeado'] += 1
+                caminho_destino_final = FileRenamer.make_unique_name(caminho_destino_previsto)
+                
+                logging.info(f"DUPLICATA DE NOME: {arquivo.name} será salvo como {caminho_destino_final.name}")
+                self.stats['renomeado'] += 1
             else:
                 caminho_destino_final = caminho_destino_previsto
 
