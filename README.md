@@ -33,6 +33,7 @@ OrganizadorArquivos/
 ├── src/                 # Código fonte modular
 │   ├── __init__.py
 │   ├── config.py        # Configurações (Extensões, Pastas)
+|   ├── monitor.py       # Funções de monitoramento em tempo real(caso ativado)
 │   ├── utils.py         # Funções auxiliares (Hash, EXIF, Log)
 │   └── core.py          # Lógica principal (Scan e Move)
 │
