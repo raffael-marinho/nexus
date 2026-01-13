@@ -4,21 +4,18 @@ import logging
 import threading
 from pathlib import Path
 
-# Certifique-se que o import está correto para o nome do seu arquivo
 from src.core import OrganizadorArquivos 
 
 ctk.set_appearance_mode("Dark")  
 ctk.set_default_color_theme("blue")  
 
 class TextHandler(logging.Handler):
-    """Classe segura para thread que envia logs para a GUI"""
     def __init__(self, text_widget):
         super().__init__()
         self.text_widget = text_widget
 
     def emit(self, record):
         msg = self.format(record)
-        # O segredo: agendar a atualização na thread principal da interface
         self.text_widget.after(0, self._append_text, msg)
 
     def _append_text(self, msg):
@@ -40,7 +37,6 @@ class FileOrganizerApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(3, weight=1) 
 
-        # --- Frames de Seleção ---
         self.frame_origem = ctk.CTkFrame(self)
         self.frame_origem.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
         
@@ -57,7 +53,6 @@ class FileOrganizerApp(ctk.CTk):
         self.entry_destino.pack(side="left", fill="x", expand=True, padx=10, pady=10)
         ctk.CTkButton(self.frame_destino, text="Selecionar", command=self.selecionar_destino, width=100).pack(side="right", padx=10)
 
-        # --- Ações ---
         self.frame_acoes = ctk.CTkFrame(self, fg_color="transparent")
         self.frame_acoes.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
 
@@ -71,7 +66,6 @@ class FileOrganizerApp(ctk.CTk):
                                           height=40, font=("Roboto", 14, "bold"))
         self.btn_executar.pack(side="right", padx=10, fill="x", expand=True)
 
-        # --- Log ---
         ctk.CTkLabel(self, text="Log de Execução:", anchor="w").grid(row=3, column=0, padx=20, pady=(10,0), sticky="w")
         self.textbox_log = ctk.CTkTextbox(self, state="disabled", font=("Consolas", 12))
         self.textbox_log.grid(row=4, column=0, padx=20, pady=(5, 20), sticky="nsew")
@@ -79,20 +73,17 @@ class FileOrganizerApp(ctk.CTk):
         self.setup_logging()
 
     def setup_logging(self):
-        # Limpa handlers anteriores para evitar duplicação ou conflitos
         logger = logging.getLogger()
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
             
         logger.setLevel(logging.INFO)
         
-        # Handler da Interface
         text_handler = TextHandler(self.textbox_log)
         formatter = logging.Formatter('%(asctime)s - %(message)s', datefmt='%H:%M:%S')
         text_handler.setFormatter(formatter)
         logger.addHandler(text_handler)
         
-        # Handler do Terminal (para você ver erros críticos no VS Code)
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
@@ -137,7 +128,6 @@ class FileOrganizerApp(ctk.CTk):
         except Exception as e:
             logging.error(f"Erro fatal: {e}")
         finally:
-            # Reabilita o botão (usando after para segurança de thread)
             self.after(0, lambda: self.btn_executar.configure(state="normal", text="INICIAR ORGANIZAÇÃO"))
 
 if __name__ == "__main__":

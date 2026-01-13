@@ -36,6 +36,7 @@ OrganizadorArquivos/
 │   ├── utils.py         # Funções auxiliares (Hash, EXIF, Log)
 │   └── core.py          # Lógica principal (Scan e Move)
 │
-├── main.py              # Ponto de entrada da aplicação
-├── requirements.txt     # Dependências do projeto
+├── app.py               # Interface Gráfica (Rode: python app.py)
+├── main.py              # Modo Terminal (Rode: python main.py)
+├── requirements.txt     # Dependências do projeto (Rode: pip install -r requirements.txt)
 └── README.md            # Documentação

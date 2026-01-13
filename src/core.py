@@ -117,7 +117,6 @@ class OrganizadorArquivos:
             self.stats['erro'] += 1
 
     def _exibir_relatorio_final(self):
-        """Imprime o resumo da operação no console."""
         print("\n" + "="*40)
         print("RELATORIO DE EXECUCAO")
         print("="*40)
